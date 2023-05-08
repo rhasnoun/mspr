@@ -1,13 +1,25 @@
-from pydantic import BaseModel 
+from pydantic import BaseModel, Field, EmailStr
 
-class Utilisateur(BaseModel):
-    id_utilisateur: int
+class User(BaseModel):
+    id_user: int
     nom: str
     prenom: str
     email: str
     mot_de_passe: str
     class Config:
         orm_mode= True
+
+class UserLoginSchema(BaseModel):
+    email: EmailStr = Field(...)
+    password: str = Field(...)
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "email": "joe@xyz.com",
+                "password": "any"
+            }
+        }
 
 class Plante(BaseModel):
     id_plante: int
@@ -18,10 +30,10 @@ class Plante(BaseModel):
         orm_mode= True
 class Garde(BaseModel):
     id_garde: int
-    id_utilisateur: int
+    id_user: int
     id_plante: int
     date_garde: str
-    utilisateur: str
+    user: str
     plante: str
     class Config:
         orm_mode= True
@@ -39,9 +51,9 @@ class Conseil(BaseModel):
 
 class Contact(BaseModel):
     id_contact: int
-    id_utilisateur1: int
-    id_utilisateur2: int
-    utilisateur1: str
-    utilisateur2: str
+    id_user1: int
+    id_user2: int
+    user1: str
+    user2: str
     class Config:
         orm_mode= True

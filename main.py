@@ -1,13 +1,16 @@
 import os
 import uvicorn
 from dotenv import load_dotenv
-from fastapi import FastAPI 
+from fastapi import Body, Depends, FastAPI 
 from fastapi_sqlalchemy import DBSessionMiddleware, db
-
-from models import Utilisateur as ModelUtilisateur, Plante as ModelPlante, Garde as ModelGarde, Conseil as ModelConseil, Contact as ModelContact
-from schema import Utilisateur as SchemaUtilisateur, Plante as SchemaPlante, Garde as SchemaGarde, Conseil as SchemaConseil, Contact as SchemaContact
+from auth.auth_bearer import JWTBearer
+from auth.auth_handler import signJWT
+from models import user as Modeluser, Plante as ModelPlante, Garde as ModelGarde, Conseil as ModelConseil, Contact as ModelContact
+from schema import UserLoginSchema, User as SchemaUser, Plante as SchemaPlante, Garde as SchemaGarde, Conseil as SchemaConseil, Contact as SchemaContact
 
 load_dotenv(".env")
+
+
 
 app = FastAPI()
 
@@ -17,23 +20,59 @@ app.add_middleware(DBSessionMiddleware, db_url=os.environ["DATABASE_URL"])
 async def root():
     return {"message": "Hello World"}
 
-@app.post("/add-utilisateur/", response_model=SchemaUtilisateur)
-def add_utilisateur(utilisateur: SchemaUtilisateur):
-    db_utilisateur = ModelUtilisateur(nom=utilisateur.nom, prenom=utilisateur.prenom, email=utilisateur.email, mot_de_passe=utilisateur.mot_de_passe)
-    db.session.add(db_utilisateur)
-    db.session.commit()
-    return db_utilisateur
 
-@app.post("/add-plante/", response_model=SchemaPlante)
-def add_plante(plante: SchemaPlante):
-    db_plante = ModelPlante(nom_plante=plante.nom_plante, type=plante.type, image=plante.image)
-    db.session.add(db_plante)
+@app.post("/user/signup", tags=['user'])
+def sign_user(user: SchemaUser):
+    db_user = Modeluser(nom=user.nom, prenom=user.prenom, email=user.email, mot_de_passe=user.mot_de_passe)
+    db.session.add(db_user)
     db.session.commit()
-    return db_plante
+    return signJWT(user.email)
+
+def check_user(data: UserLoginSchema):
+    users = db.session.query(Modeluser).all()
+    for user in users:
+        if user.email == data.email and user.mot_de_passe == data.password:
+            return True
+    return False
+
+
+@app.post("/user/login", tags=["user"])
+def user_login(user: UserLoginSchema = Body(...)):
+    if check_user(user):
+        return signJWT(user.email)
+    return {
+        "error": "Wrong login details!"
+    }
+
+@app.get("/get-user/", tags=["user"])
+def get_users():
+    users = db.session.query(Modeluser).all()
+    return users
+
+
+@app.post("/plante/add",dependencies=[Depends(JWTBearer())],tags=["plante"] ,response_model=bool)
+def add_plante(plante: SchemaPlante):
+    try:
+        db_plante = ModelPlante(nom_plante=plante.nom_plante, type=plante.type, image=plante.image)
+        db.session.add(db_plante)
+        db.session.commit()
+        return True
+    except:
+        return False
+
+@app.post("/plante/{id}",dependencies=[Depends(JWTBearer())],tags=["plante"] ,response_model=bool)
+def get_plante(plante: SchemaPlante):
+    try: 
+        db_plante = ModelPlante(nom_plante=plante.nom_plante, type=plante.type, image=plante.image)
+        db.session.add(db_plante)
+        db.session.commit()
+        return True 
+    except:
+        return False
 
 @app.post("/add-garde/", response_model=SchemaGarde)
 def add_garde(garde: SchemaGarde):
-    db_garde = ModelGarde(id_utilisateur=garde.id_utilisateur, id_plante=garde.id_plante, date_garde=garde.date_garde)
+    db_garde = ModelGarde(id_user=garde.id_user, id_plante=garde.id_plante, date_garde=garde.date_garde)
     db.session.add(db_garde)
     db.session.commit()
     return db_garde
@@ -47,15 +86,12 @@ def add_conseil(conseil: SchemaConseil):
 
 @app.post("/add-contact/", response_model=SchemaContact)
 def add_contact(contact: SchemaContact):
-    db_contact = ModelContact(id_utilisateur1=contact.id_utilisateur1, id_utilisateur2=contact.id_utilisateur2)
+    db_contact = ModelContact(id_user1=contact.id_user1, id_user2=contact.id_user2)
     db.session.add(db_contact)
     db.session.commit()
     return db_contact
 
-@app.get("/get-utilisateur/")
-def get_utilisateurs():
-    utilisateurs = db.session.query(ModelUtilisateur).all()
-    return utilisateurs
+
 
 
 if __name__ == "__main__":

@@ -4,9 +4,9 @@ from sqlalchemy.ext.declarative import declarative_base
 
 Base = declarative_base()
 
-class Utilisateur(Base):
-    __tablename__  = 'utilisateur'
-    id_utilisateur = Column(Integer, primary_key=True)
+class user(Base):
+    __tablename__  = 'user'
+    id_user = Column(Integer, primary_key=True)
     nom = Column(String(50))
     prenom = Column(String(50))
     email = Column(String(100))
@@ -22,26 +22,26 @@ class Plante(Base):
 class Garde(Base):
     __tablename__  = 'garde'
     id_garde = Column(Integer, primary_key=True)
-    id_utilisateur = Column(Integer, ForeignKey('utilisateur.id_utilisateur'))
+    id_user = Column(Integer, ForeignKey('user.id_user'))
     id_plante = Column(Integer, ForeignKey('plante.id_plante'))
     date_garde = Column(Date)
-    utilisateur = relationship(Utilisateur)
+    user = relationship(user)
     plante = relationship(Plante)
 
 class Conseil(Base):
     __tablename__  = 'conseil'
     id_conseil = Column(Integer, primary_key=True)
-    id_botaniste = Column(Integer, ForeignKey('utilisateur.id_utilisateur'))
+    id_botaniste = Column(Integer, ForeignKey('user.id_user'))
     id_plante = Column(Integer, ForeignKey('plante.id_plante'))
     date_conseil = Column(Date)
     texte_conseil = Column(Text)
-    botaniste = relationship(Utilisateur)
+    botaniste = relationship(user)
     plante = relationship(Plante)
 
 class Contact(Base):
     __tablename__  = 'contact'
     id_contact = Column(Integer, primary_key=True)
-    id_utilisateur1 = Column(Integer, ForeignKey('utilisateur.id_utilisateur'))
-    id_utilisateur2 = Column(Integer, ForeignKey('utilisateur.id_utilisateur'))
-    utilisateur1 = relationship(Utilisateur, foreign_keys=[id_utilisateur1])
-    utilisateur2 = relationship(Utilisateur, foreign_keys=[id_utilisateur2])
+    id_user1 = Column(Integer, ForeignKey('user.id_user'))
+    id_user2 = Column(Integer, ForeignKey('user.id_user'))
+    user1 = relationship(user, foreign_keys=[id_user1])
+    user2 = relationship(user, foreign_keys=[id_user2])
