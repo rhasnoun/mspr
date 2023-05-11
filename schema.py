@@ -23,16 +23,18 @@ class UserLoginSchema(BaseModel):
 
 class Plante(BaseModel):
     id_plante: int
+    id_owner: int
     nom_plante: str
     type: str
-    image: str
+    image_url: str
     class Config:
         orm_mode= True
 class Garde(BaseModel):
     id_garde: int
     id_user: int
     id_plante: int
-    date_garde: str
+    date_debut: str
+    date_fin: str
     user: str
     plante: str
     class Config:
